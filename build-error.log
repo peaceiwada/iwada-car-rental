@@ -1,0 +1,18 @@
+
+> iwada-car-rental@1.0.0 build
+> next build
+
+   ▲ Next.js 14.0.4
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+Failed to compile.
+
+app\api\auth\login\page.jsx
+You cannot have two parallel pages that resolve to the same path. Please check /api/auth/login/page and /api/auth/login/route. Refer to the route group docs for more information: https://nextjs.org/docs/app/building-your-application/routing/route-groups
+
+app\api\auth\register\page.jsx
+You cannot have two parallel pages that resolve to the same path. Please check /api/auth/register/page and /api/auth/register/route. Refer to the route group docs for more information: https://nextjs.org/docs/app/building-your-application/routing/route-groups
+
+
+> Build failed because of webpack errors
