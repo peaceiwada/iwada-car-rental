@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import {
   FaCar,
@@ -11,17 +11,54 @@ import {
   FaArrowRight,
   FaMapMarkerAlt,
   FaCalendarAlt,
-  FaBolt,
   FaGem,
   FaClock,
   FaCheckCircle,
-  FaRocket,
-  FaUsers,
-  FaThumbsUp
+  FaRocket
 } from 'react-icons/fa'
 import CarCard from './components/cars/CarCard'
 import LoadingSkeleton from './components/layout/LoadingSkeleton'
 import RecentlyViewed from './components/home/RecentlyViewed'
+
+// Parallax Section Component
+const ParallaxSection = ({ children, speed = 0.3, className = '' }) => {
+  const sectionRef = useRef(null)
+  const bgRef = useRef(null)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!sectionRef.current || !bgRef.current) return
+      
+      const scrollPosition = window.scrollY
+      const sectionTop = sectionRef.current.offsetTop
+      const distanceFromTop = scrollPosition - sectionTop
+      const yPos = distanceFromTop * speed
+      
+      bgRef.current.style.transform = `translateY(${yPos}px)`
+    }
+    
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [speed])
+
+  return (
+    <div ref={sectionRef} className={`relative overflow-hidden ${className}`}>
+      <div
+        ref={bgRef}
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: 'url("/images/hero-bg.jpg")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          willChange: 'transform'
+        }}
+      />
+      <div className="relative z-10">
+        {children}
+      </div>
+    </div>
+  )
+}
 
 export default function HomePage() {
   const [featuredCars, setFeaturedCars] = useState([])
@@ -99,33 +136,29 @@ export default function HomePage() {
       icon: FaCar,
       title: '500+ Vehicles',
       description: 'Wide selection from economy to luxury',
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-100',
-      gradient: 'from-amber-500 to-orange-500'
+      color: 'text-amber-500',
+      bgColor: 'bg-amber-100'
     },
     {
       icon: FaShieldAlt,
       title: 'Full Insurance',
       description: '100% coverage on all rentals',
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-100',
-      gradient: 'from-emerald-500 to-teal-500'
+      color: 'text-emerald-500',
+      bgColor: 'bg-emerald-100'
     },
     {
       icon: FaHeadset,
       title: '24/7 Support',
       description: 'Round-the-clock customer service',
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-100',
-      gradient: 'from-amber-500 to-orange-500'
+      color: 'text-indigo-500',
+      bgColor: 'bg-indigo-100'
     },
     {
       icon: FaMoneyBillWave,
       title: 'Best Price Guarantee',
       description: 'Affordable rates with no hidden fees',
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-100',
-      gradient: 'from-amber-500 to-orange-500'
+      color: 'text-red-500',
+      bgColor: 'bg-red-100'
     }
   ]
 
@@ -153,68 +186,66 @@ export default function HomePage() {
     }
   ]
 
-  if (loading) {
-    return <LoadingSkeleton />
-  }
+  if (loading) return <LoadingSkeleton />
 
   return (
-    <div>
-      {/* HERO SECTION */}
-      <section className="relative bg-gradient-to-br from-amber-600 via-orange-500 to-amber-700 text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-yellow-300 rounded-full blur-3xl animate-pulse-slow"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-orange-300 rounded-full blur-3xl animate-pulse-slow delay-700"></div>
-        </div>
-        
-        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 animate-float">
-              <FaRocket className="text-yellow-300" />
-              <span className="text-sm font-medium">Nigeria's #1 Car Rental Service</span>
-            </div>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-              Drive Your <span className="text-yellow-300">Dream Car</span> in Nigeria
-            </h1>
-            <p className="text-xl mb-8 text-amber-100 leading-relaxed">
-              Experience luxury and comfort with our premium car rental service. 
-              Best prices, wide selection, and exceptional service across all major cities.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link href="/cars" className="group bg-gradient-to-r from-amber-600 to-orange-600 text-white px-8 py-4 rounded-xl font-bold hover:from-amber-700 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 shadow-lg hover:shadow-amber-500/25">
-                Browse Cars <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link href="/contact" className="bg-white/10 backdrop-blur-sm px-8 py-4 rounded-xl font-semibold hover:bg-white/20 transition-all duration-300 border border-white/20">
-                Contact Us
-              </Link>
+    <div className="font-sans">
+      {/* HERO with Parallax */}
+      <ParallaxSection speed={0.3} className="min-h-[600px]">
+        <div className="relative bg-gradient-to-br from-amber-600 via-orange-500 to-amber-700 text-white overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-20 left-10 w-72 h-72 bg-yellow-300 rounded-full blur-3xl animate-pulse-slow"></div>
+            <div className="absolute bottom-20 right-10 w-96 h-96 bg-orange-300 rounded-full blur-3xl animate-pulse-slow delay-700"></div>
+          </div>
+          <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-36">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 animate-float">
+                <FaRocket className="text-yellow-300" />
+                <span className="text-sm font-medium">Nigeria's #1 Car Rental Service</span>
+              </div>
+              <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
+                Drive Your <span className="text-yellow-300">Dream Car</span>
+              </h1>
+              <p className="text-lg md:text-xl mb-8 text-amber-100 leading-relaxed">
+                Premium car rentals across major cities with top-notch service and affordable rates.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Link href="/cars" className="group bg-gradient-to-r from-amber-500 to-orange-500 text-white px-8 py-4 rounded-2xl font-bold hover:scale-105 transition transform shadow-lg hover:shadow-amber-400/30 inline-flex items-center gap-2">
+                  Browse Cars <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link href="/contact" className="bg-white/20 backdrop-blur-sm px-8 py-4 rounded-2xl font-semibold hover:bg-white/30 transition-all duration-300 border border-white/20">
+                  Contact Us
+                </Link>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </ParallaxSection>
 
-      {/* STATS SECTION */}
-      <section className="py-12 bg-white">
+      {/* STATS */}
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="p-6">
-              <div className="text-4xl font-bold text-amber-600 mb-2">{counters.cars}+</div>
-              <p className="text-slate-600 font-medium">Luxury Vehicles</p>
+            <div className="p-6 bg-white rounded-2xl shadow hover:shadow-lg transition-all">
+              <div className="text-5xl font-bold text-amber-500 mb-2">{counters.cars}+</div>
+              <p className="text-gray-600 font-medium">Luxury Vehicles</p>
             </div>
-            <div className="p-6">
-              <div className="text-4xl font-bold text-orange-600 mb-2">{counters.customers}+</div>
-              <p className="text-slate-600 font-medium">Happy Customers</p>
+            <div className="p-6 bg-white rounded-2xl shadow hover:shadow-lg transition-all">
+              <div className="text-5xl font-bold text-orange-500 mb-2">{counters.customers}+</div>
+              <p className="text-gray-600 font-medium">Happy Customers</p>
             </div>
-            <div className="p-6">
-              <div className="text-4xl font-bold text-amber-600 mb-2">{counters.years}+</div>
-              <p className="text-slate-600 font-medium">Years of Excellence</p>
+            <div className="p-6 bg-white rounded-2xl shadow hover:shadow-lg transition-all">
+              <div className="text-5xl font-bold text-amber-500 mb-2">{counters.years}+</div>
+              <p className="text-gray-600 font-medium">Years of Excellence</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SEARCH SECTION */}
-      <section className="relative -mt-8 z-20">
+      {/* SEARCH */}
+      <section className="relative -mt-12 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+          <div className="bg-white rounded-3xl shadow-xl p-6 md:p-10">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Find Your Perfect Ride</h2>
             <form onSubmit={handleQuickSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
@@ -222,7 +253,7 @@ export default function HomePage() {
                 <input
                   type="text"
                   placeholder="Location"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500"
                   value={searchLocation}
                   onChange={(e) => setSearchLocation(e.target.value)}
                 />
@@ -231,7 +262,7 @@ export default function HomePage() {
                 <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-500" />
                 <input
                   type="date"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500"
                   value={pickupDate}
                   onChange={(e) => setPickupDate(e.target.value)}
                 />
@@ -240,12 +271,12 @@ export default function HomePage() {
                 <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-500" />
                 <input
                   type="date"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500"
                   value={returnDate}
                   onChange={(e) => setReturnDate(e.target.value)}
                 />
               </div>
-              <button type="submit" className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-orange-700 transition-all duration-300">
+              <button type="submit" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-2xl font-semibold hover:scale-105 transition transform">
                 Search Cars
               </button>
             </form>
@@ -253,19 +284,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* RECENTLY VIEWED CARS SECTION */}
+      {/* RECENTLY VIEWED */}
       <RecentlyViewed />
 
-      {/* FEATURES SECTION */}
+      {/* FEATURES */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-amber-100 px-4 py-2 rounded-full mb-4">
-              <FaGem className="text-amber-600" />
-              <span className="text-sm font-semibold text-amber-600">Why Choose Us</span>
+              <FaGem className="text-amber-500" />
+              <span className="text-sm font-semibold text-amber-500">Why Choose Us</span>
             </div>
             <h2 className="text-4xl font-bold text-gray-800 mb-4">
-              The <span className="text-amber-600">Iwada</span> Advantage
+              The <span className="text-amber-500">Iwada</span> Advantage
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
               We provide the best car rental experience with premium service
@@ -275,7 +306,7 @@ export default function HomePage() {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="bg-white rounded-xl p-6 text-center border border-amber-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                className="bg-white rounded-2xl p-6 text-center border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
               >
                 <div className={`inline-flex p-3 rounded-xl ${feature.bgColor} mb-4`}>
                   <feature.icon className={`text-3xl ${feature.color}`} />
@@ -288,17 +319,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FEATURED CARS SECTION */}
+      {/* FEATURED CARS */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-12 flex-wrap gap-4">
             <div>
               <h2 className="text-4xl font-bold text-gray-800 mb-2">
-                Featured <span className="text-amber-600">Vehicles</span>
+                Featured <span className="text-amber-500">Vehicles</span>
               </h2>
               <p className="text-gray-600 text-lg">Our most popular cars for rent</p>
             </div>
-            <Link href="/cars" className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2">
+            <Link href="/cars" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2">
               View All <FaArrowRight />
             </Link>
           </div>
@@ -318,7 +349,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* TESTIMONIALS SECTION */}
+      {/* TESTIMONIALS */}
       <section className="py-20 bg-gradient-to-r from-amber-50 to-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -327,7 +358,7 @@ export default function HomePage() {
               <span className="text-sm font-semibold text-gray-700">Testimonials</span>
             </div>
             <h2 className="text-4xl font-bold text-gray-800 mb-4">
-              What Our <span className="text-amber-600">Customers Say</span>
+              What Our <span className="text-amber-500">Customers Say</span>
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
               Join thousands of satisfied customers who trust Iwada Rentals
@@ -335,7 +366,7 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+              <div key={index} className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
                     <FaStar key={i} className={i < testimonial.rating ? 'text-yellow-500' : 'text-gray-200'} />
@@ -357,8 +388,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA SECTION */}
-      <section className="py-20 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700">
+      {/* CTA */}
+      <section className="py-20 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
             <FaClock className="text-white" />
@@ -371,10 +402,10 @@ export default function HomePage() {
             Book your perfect car today and enjoy a seamless driving experience
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Link href="/cars" className="bg-white text-amber-700 px-8 py-4 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-300 inline-flex items-center gap-2">
+            <Link href="/cars" className="bg-white text-amber-500 px-8 py-4 rounded-2xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-300 inline-flex items-center gap-2">
               Book Now <FaArrowRight />
             </Link>
-            <Link href="/contact" className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-bold hover:bg-white/10 transition-all duration-300">
+            <Link href="/contact" className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-2xl font-bold hover:bg-white/10 transition-all duration-300">
               Contact Support
             </Link>
           </div>

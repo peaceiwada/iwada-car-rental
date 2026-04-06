@@ -23,9 +23,9 @@ export default function CarCard({ car }) {
   if (!car) return null
 
   return (
-    <Link href={`/cars/${car.id}`}>
-      <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer transform hover:-translate-y-1 h-full flex flex-col">
-        {/* Car Image */}
+    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer transform hover:-translate-y-1 h-full flex flex-col">
+      {/* Car Image */}
+      <Link href={`/cars/${car.id}`}>
         <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
           {!imageError && imageUrl ? (
             <img
@@ -74,9 +74,11 @@ export default function CarCard({ car }) {
             </div>
           )}
         </div>
+      </Link>
 
-        {/* Car Details */}
-        <div className="p-4 flex-1 flex flex-col">
+      {/* Car Details */}
+      <div className="p-4 flex-1 flex flex-col">
+        <Link href={`/cars/${car.id}`}>
           <div className="mb-2">
             <h3 className="text-lg font-bold text-slate-800 group-hover:text-amber-600 transition-colors">
               {car.name}
@@ -103,44 +105,45 @@ export default function CarCard({ car }) {
             </div>
           </div>
 
-          {/* Price and Buttons */}
-          <div className="border-t border-slate-100 pt-3 mt-auto">
+          {/* Price */}
+          <div className="border-t border-slate-100 pt-3">
             <div className="mb-2">
               <span className="text-2xl font-bold text-amber-600">
                 {formatPrice(car.pricePerDay || car.price || 50000)}
               </span>
               <span className="text-sm text-slate-500"> /day</span>
             </div>
-            
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <button 
-                onClick={(e) => {
-                  e.preventDefault()
-                  if (isInCompare(car.id)) {
-                    removeFromCompare(car.id)
-                  } else {
-                    addToCompare(car)
-                  }
-                }}
-                className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all duration-300 ${
-                  isInCompare(car.id) 
-                    ? 'bg-green-100 text-green-700 border border-green-300' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-amber-600 hover:text-white'
-                }`}
-              >
-                {isInCompare(car.id) ? '✅ Added' : '➕ Compare'}
-              </button>
-              <button 
-                onClick={(e) => e.preventDefault()}
-                className="flex-1 py-2 rounded-xl font-semibold text-sm transition-all duration-300 bg-amber-600 text-white hover:bg-amber-700"
-              >
-                Rent Now
-              </button>
-            </div>
           </div>
+        </Link>
+
+        {/* Action Buttons - Outside the Link */}
+        <div className="flex gap-2 mt-2">
+          <button 
+            onClick={(e) => {
+              e.preventDefault()
+              if (isInCompare(car.id)) {
+                removeFromCompare(car.id)
+              } else {
+                addToCompare(car)
+              }
+            }}
+            className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all duration-300 ${
+              isInCompare(car.id) 
+                ? 'bg-green-100 text-green-700 border border-green-300' 
+                : 'bg-gray-100 text-gray-700 hover:bg-amber-600 hover:text-white'
+            }`}
+          >
+            {isInCompare(car.id) ? '✅ Added' : '➕ Compare'}
+          </button>
+          <Link href={`/cars/${car.id}`} className="flex-1">
+            <button 
+              className="w-full py-2 rounded-xl font-semibold text-sm transition-all duration-300 bg-amber-600 text-white hover:bg-amber-700"
+            >
+              Rent Now
+            </button>
+          </Link>
         </div>
       </div>
-    </Link>
+    </div>
   )
 }
