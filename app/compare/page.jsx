@@ -38,7 +38,7 @@ export default function ComparePage() {
         2: { id: 2, name: 'Honda Accord', type: 'Sedan', pricePerDay: 27000, seats: 5, fuelType: 'Petrol', transmission: 'Automatic', location: 'Lagos', rating: 4.7, available: true, features: ['Air Conditioning', 'Bluetooth', 'USB Port', 'GPS', 'Backup Camera', 'Cruise Control'] },
         3: { id: 3, name: 'Toyota Corolla', type: 'Economy', pricePerDay: 18000, seats: 5, fuelType: 'Petrol', transmission: 'Manual', location: 'Abuja', rating: 4.5, available: false, features: ['Air Conditioning', 'USB Port'] },
         4: { id: 4, name: 'Lexus RX 350', type: 'SUV', pricePerDay: 55000, seats: 7, fuelType: 'Petrol', transmission: 'Automatic', location: 'Lagos', rating: 4.9, available: true, features: ['Air Conditioning', 'Bluetooth', 'USB Port', 'GPS', 'Backup Camera', 'Sunroof', 'Heated Seats', 'Cruise Control'] },
-        5: { id: 5, name: 'Mercedes C-Class', type: 'Luxury', pricePerDay: 75000, seats: 5, fuelType: 'Petrol', transmission: 'Automatic', location: 'Lagos', rating: 5.0, available: false, features: ['Air Conditioning', 'Bluetooth', 'USB Port', 'GPS', 'Backup Camera', 'Sunroof', 'Leather Seats', 'Cruise Control'] },
+        5: { id: 5, name: 'Mercedes Benz C-Class', type: 'Luxury', pricePerDay: 75000, seats: 5, fuelType: 'Petrol', transmission: 'Automatic', location: 'Lagos', rating: 5.0, available: false, features: ['Air Conditioning', 'Bluetooth', 'USB Port', 'GPS', 'Backup Camera', 'Sunroof', 'Leather Seats', 'Cruise Control'] },
         6: { id: 6, name: 'Hyundai Santa Fe', type: 'SUV', pricePerDay: 35000, seats: 7, fuelType: 'Diesel', transmission: 'Automatic', location: 'Abuja', rating: 4.6, available: true, features: ['Air Conditioning', 'Bluetooth', 'USB Port', 'GPS', 'Cruise Control'] },
         7: { id: 7, name: 'Kia Picanto', type: 'Economy', pricePerDay: 12000, seats: 4, fuelType: 'Petrol', transmission: 'Manual', location: 'Port Harcourt', rating: 4.3, available: true, features: ['Air Conditioning', 'USB Port'] },
         8: { id: 8, name: 'Toyota Hilux', type: 'SUV', pricePerDay: 40000, seats: 5, fuelType: 'Diesel', transmission: 'Manual', location: 'Lagos', rating: 4.7, available: true, features: ['Air Conditioning', 'Bluetooth', 'USB Port', '4x4', 'Cruise Control'] }
@@ -189,10 +189,10 @@ export default function ComparePage() {
                   <img
                     src={getCarImage(car.name)}
                     alt={car.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain bg-gray-50 p-4"
                     onError={(e) => {
-                      e.target.style.display = 'none'
-                      e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center"><svg class="text-gray-400 text-5xl" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></div>'
+                      e.target.onerror = null
+                      e.target.src = 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600&h=400&fit=crop'
                     }}
                   />
                   {!car.available && (

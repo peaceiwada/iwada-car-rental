@@ -31,7 +31,7 @@ export default function CarCard({ car }) {
             <img
               src={imageUrl}
               alt={car.name}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              className="w-full h-full object-contain bg-gray-50 p-2 group-hover:scale-105 transition-transform duration-500"
               onError={() => setImageError(true)}
               loading="lazy"
             />

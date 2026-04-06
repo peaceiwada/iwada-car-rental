@@ -46,11 +46,11 @@ export default function AgentPendingPage() {
           </p>
           
           <div className="bg-amber-50 rounded-xl p-4 mb-6 text-left">
-            <p className="text-sm text-amber-800 font-semibold mb-2">📋 Account Details:</p>
-            <p className="text-sm text-gray-700">👤 Name: {user?.name}</p>
-            <p className="text-sm text-gray-700">🏢 Business: {user?.businessName}</p>
-            <p className="text-sm text-gray-700">📧 Email: {user?.email}</p>
-            <p className="text-sm text-gray-700">📅 Registered: {new Date(user?.registrationDate).toLocaleDateString()}</p>
+            <p className="text-sm text-amber-800 font-semibold mb-2">Account Details:</p>
+            <p className="text-sm text-gray-700"> Name: {user?.name}</p>
+            <p className="text-sm text-gray-700">Business: {user?.businessName}</p>
+            <p className="text-sm text-gray-700">Email: {user?.email}</p>
+            <p className="text-sm text-gray-700">Registered: {new Date(user?.registrationDate).toLocaleDateString()}</p>
           </div>
           
           <button
@@ -62,7 +62,7 @@ export default function AgentPendingPage() {
           
           <Link href="/">
             <button className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all">
-              🏠 Return to Home
+              Return to Home
             </button>
           </Link>
           
