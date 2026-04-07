@@ -1,56 +1,206 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { 
-  FaCar, FaCheck, FaTimes, FaArrowLeft, FaStar, 
-  FaGasPump, FaUsers, FaCog, FaMapMarkerAlt, 
-  FaInfoCircle
-} from 'react-icons/fa'
-import { getCarImage } from '../lib/carImages'
+import Link from 'next/link'
+import { FaSearch, FaFilter, FaTimes, FaCar, FaMapMarkerAlt, FaCalendarAlt, FaStar, FaCheckCircle, FaTimesCircle } from 'react-icons/fa'
+import CarCard from '../components/cars/CarCard'
+import LoadingSkeleton from '../components/layout/LoadingSkeleton'
+import { useCompare } from '../context/CompareContext'
 
-export default function ComparePage() {
+// Comparison Bar Component
+const ComparisonBar = () => {
+  const { compareList, removeFromCompare, clearCompare } = useCompare()
+  
+  if (compareList.length === 0) return null
+  
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-amber-200 p-3 z-50">
+      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div className="flex flex-wrap justify-center gap-2">
+          {compareList.map(car => (
+            <div key={car.id} className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-lg">
+              <span className="text-sm font-medium">{car.name}</span>
+              <button onClick={() => removeFromCompare(car.id)} className="text-red-500 hover:text-red-700">
+                ✕
+              </button>
+            </div>
+          ))}
+          {compareList.length < 3 && <div className="text-xs text-gray-400">Add {3 - compareList.length} more</div>}
+        </div>
+        <div className="flex gap-2">
+          <button onClick={clearCompare} className="text-sm text-gray-500 hover:text-red-500 px-3 py-1">
+            Clear All
+          </button>
+          <Link href={`/compare?ids=${compareList.map(c => c.id).join(',')}`}>
+            <button className="bg-amber-600 text-white px-5 py-1.5 rounded-lg font-semibold text-sm hover:bg-amber-700 transition">
+              Compare ({compareList.length})
+            </button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function CarsPage() {
   const searchParams = useSearchParams()
   const [cars, setCars] = useState([])
+  const [filteredCars, setFilteredCars] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showFilters, setShowFilters] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState('recommended')
+  
+  // Price range state for dual slider
+  const [priceMin, setPriceMin] = useState(0)
+  const [priceMax, setPriceMax] = useState(100000)
+  
+  const [filters, setFilters] = useState({
+    location: searchParams.get('location') || '',
+    type: '',
+    seats: '',
+    transmission: '',
+    pickupDate: searchParams.get('pickupDate') || '',
+    returnDate: searchParams.get('returnDate') || '',
+    minRating: '',
+    availability: ''
+  })
+
+  const carTypes = ['All', 'Economy', 'Sedan', 'SUV', 'Luxury', 'Van', 'Sports']
+  const availabilityOptions = ['All', 'Available', 'Unavailable']
+
+  // Get min and max car prices from data
+  const getGlobalMinPrice = () => {
+    if (cars.length === 0) return 0
+    return Math.min(...cars.map(car => car.pricePerDay))
+  }
+  
+  const getGlobalMaxPrice = () => {
+    if (cars.length === 0) return 100000
+    return Math.max(...cars.map(car => car.pricePerDay))
+  }
 
   useEffect(() => {
-    const ids = searchParams.get('ids')
-    if (ids) {
-      const carIds = ids.split(',').map(id => parseInt(id))
-      fetchCarsForComparison(carIds)
-    } else {
-      const saved = localStorage.getItem('compareList')
-      if (saved) {
-        const compareList = JSON.parse(saved)
-        fetchCarsForComparison(compareList.map(c => c.id))
-      } else {
-        setLoading(false)
-      }
-    }
-  }, [searchParams])
+    fetchCars()
+  }, [])
 
-  const fetchCarsForComparison = async (carIds) => {
+  useEffect(() => {
+    // Initialize price range based on car data
+    if (cars.length > 0) {
+      const minPrice = getGlobalMinPrice()
+      const maxPrice = getGlobalMaxPrice()
+      setPriceMin(minPrice)
+      setPriceMax(maxPrice)
+    }
+  }, [cars])
+
+  useEffect(() => {
+    applyFiltersAndSearch()
+  }, [cars, filters, searchQuery, sortBy, priceMin, priceMax])
+
+  const fetchCars = async () => {
     try {
-      const allCars = {
-        1: { id: 1, name: 'Toyota Camry', type: 'Sedan', pricePerDay: 25000, seats: 5, fuelType: 'Petrol', transmission: 'Automatic', location: 'Lagos', rating: 4.8, available: true, features: ['Air Conditioning', 'Bluetooth', 'USB Port', 'Backup Camera', 'Cruise Control'] },
-        2: { id: 2, name: 'Honda Accord', type: 'Sedan', pricePerDay: 27000, seats: 5, fuelType: 'Petrol', transmission: 'Automatic', location: 'Lagos', rating: 4.7, available: true, features: ['Air Conditioning', 'Bluetooth', 'USB Port', 'GPS', 'Backup Camera', 'Cruise Control'] },
-        3: { id: 3, name: 'Toyota Corolla', type: 'Economy', pricePerDay: 18000, seats: 5, fuelType: 'Petrol', transmission: 'Manual', location: 'Abuja', rating: 4.5, available: false, features: ['Air Conditioning', 'USB Port'] },
-        4: { id: 4, name: 'Lexus RX 350', type: 'SUV', pricePerDay: 55000, seats: 7, fuelType: 'Petrol', transmission: 'Automatic', location: 'Lagos', rating: 4.9, available: true, features: ['Air Conditioning', 'Bluetooth', 'USB Port', 'GPS', 'Backup Camera', 'Sunroof', 'Heated Seats', 'Cruise Control'] },
-        5: { id: 5, name: 'Mercedes Benz C-Class', type: 'Luxury', pricePerDay: 75000, seats: 5, fuelType: 'Petrol', transmission: 'Automatic', location: 'Lagos', rating: 5.0, available: false, features: ['Air Conditioning', 'Bluetooth', 'USB Port', 'GPS', 'Backup Camera', 'Sunroof', 'Leather Seats', 'Cruise Control'] },
-        6: { id: 6, name: 'Hyundai Santa Fe', type: 'SUV', pricePerDay: 35000, seats: 7, fuelType: 'Diesel', transmission: 'Automatic', location: 'Abuja', rating: 4.6, available: true, features: ['Air Conditioning', 'Bluetooth', 'USB Port', 'GPS', 'Cruise Control'] },
-        7: { id: 7, name: 'Kia Picanto', type: 'Economy', pricePerDay: 12000, seats: 4, fuelType: 'Petrol', transmission: 'Manual', location: 'Port Harcourt', rating: 4.3, available: true, features: ['Air Conditioning', 'USB Port'] },
-        8: { id: 8, name: 'Toyota Hilux', type: 'SUV', pricePerDay: 40000, seats: 5, fuelType: 'Diesel', transmission: 'Manual', location: 'Lagos', rating: 4.7, available: true, features: ['Air Conditioning', 'Bluetooth', 'USB Port', '4x4', 'Cruise Control'] }
-      }
-      
-      const selectedCars = carIds.map(id => allCars[id]).filter(car => car)
-      setCars(selectedCars)
+      const mockCars = [
+        { id: 1, name: 'Toyota Camry', type: 'Sedan', pricePerDay: 25000, seats: 5, fuelType: 'Petrol', transmission: 'Automatic', location: 'Lagos', rating: 4.8, featured: true, year: 2023, available: true },
+        { id: 2, name: 'Honda Accord', type: 'Sedan', pricePerDay: 27000, seats: 5, fuelType: 'Petrol', transmission: 'Automatic', location: 'Lagos', rating: 4.7, featured: true, year: 2023, available: true },
+        { id: 3, name: 'Toyota Corolla', type: 'Economy', pricePerDay: 18000, seats: 5, fuelType: 'Petrol', transmission: 'Manual', location: 'Abuja', rating: 4.5, featured: true, year: 2022, available: false },
+        { id: 4, name: 'Lexus RX 350', type: 'SUV', pricePerDay: 55000, seats: 7, fuelType: 'Petrol', transmission: 'Automatic', location: 'Lagos', rating: 4.9, featured: true, year: 2023, available: true },
+        { id: 5, name: 'Mercedes Benz C-Class', type: 'Luxury', pricePerDay: 75000, seats: 5, fuelType: 'Petrol', transmission: 'Automatic', location: 'Lagos', rating: 5.0, featured: false, year: 2024, available: false },
+        { id: 6, name: 'Hyundai Santa Fe', type: 'SUV', pricePerDay: 35000, seats: 7, fuelType: 'Diesel', transmission: 'Automatic', location: 'Abuja', rating: 4.6, featured: false, year: 2023, available: true },
+        { id: 7, name: 'Kia Picanto', type: 'Economy', pricePerDay: 12000, seats: 4, fuelType: 'Petrol', transmission: 'Manual', location: 'Port Harcourt', rating: 4.3, featured: false, year: 2022, available: true },
+        { id: 8, name: 'Toyota Hilux', type: 'SUV', pricePerDay: 40000, seats: 5, fuelType: 'Diesel', transmission: 'Manual', location: 'Lagos', rating: 4.7, featured: false, year: 2023, available: true }
+      ]
+      setCars(mockCars)
+      setFilteredCars(mockCars)
     } catch (error) {
-      console.error('Error fetching cars for comparison:', error)
+      console.error('Error fetching cars:', error)
     } finally {
       setLoading(false)
     }
+  }
+
+  const applyFiltersAndSearch = () => {
+    let filtered = [...cars]
+
+    if (searchQuery) {
+      filtered = filtered.filter(car => 
+        car.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        car.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        car.type.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+
+    if (filters.location) {
+      filtered = filtered.filter(car => 
+        car.location?.toLowerCase().includes(filters.location.toLowerCase())
+      )
+    }
+
+    // Price range filter using slider values
+    filtered = filtered.filter(car => 
+      car.pricePerDay >= priceMin && car.pricePerDay <= priceMax
+    )
+
+    if (filters.type && filters.type !== 'All') {
+      filtered = filtered.filter(car => car.type === filters.type)
+    }
+
+    if (filters.availability && filters.availability !== 'All') {
+      filtered = filtered.filter(car => 
+        filters.availability === 'Available' ? car.available === true : car.available === false
+      )
+    }
+
+    switch (sortBy) {
+      case 'price_low':
+        filtered.sort((a, b) => a.pricePerDay - b.pricePerDay)
+        break
+      case 'price_high':
+        filtered.sort((a, b) => b.pricePerDay - a.pricePerDay)
+        break
+      case 'rating':
+        filtered.sort((a, b) => b.rating - a.rating)
+        break
+      case 'available':
+        filtered.sort((a, b) => (b.available === true) - (a.available === true))
+        break
+      default:
+        break
+    }
+
+    setFilteredCars(filtered)
+  }
+
+  const handlePriceMinChange = (e) => {
+    const value = parseInt(e.target.value)
+    if (value <= priceMax - 1000) {
+      setPriceMin(value)
+    }
+  }
+
+  const handlePriceMaxChange = (e) => {
+    const value = parseInt(e.target.value)
+    if (value >= priceMin + 1000) {
+      setPriceMax(value)
+    }
+  }
+
+  const clearFilters = () => {
+    setFilters({
+      location: '',
+      type: '',
+      seats: '',
+      transmission: '',
+      pickupDate: '',
+      returnDate: '',
+      minRating: '',
+      availability: ''
+    })
+    setSearchQuery('')
+    setSortBy('recommended')
+    setPriceMin(getGlobalMinPrice())
+    setPriceMax(getGlobalMaxPrice())
   }
 
   const formatPrice = (price) => {
@@ -61,389 +211,175 @@ export default function ComparePage() {
     }).format(price)
   }
 
-  // Find best value car - FIXED: handle null best properly
-  const getBestValueCar = () => {
-    if (cars.length === 0) return null
-    
-    let bestCar = cars[0]
-    let bestScore = (cars[0].rating * 1000) / cars[0].pricePerDay
-    
-    for (let i = 1; i < cars.length; i++) {
-      const score = (cars[i].rating * 1000) / cars[i].pricePerDay
-      if (score > bestScore) {
-        bestScore = score
-        bestCar = cars[i]
-      }
-    }
-    
-    return bestCar
-  }
-
-  const bestValueCar = getBestValueCar()
-  const allFeatures = ['Air Conditioning', 'Bluetooth', 'USB Port', 'GPS', 'Backup Camera', 'Cruise Control', 'Sunroof', 'Heated Seats', 'Leather Seats', '4x4']
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="animate-pulse">
-            <div className="h-8 w-48 bg-gray-200 rounded mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-96 bg-gray-200 rounded-2xl"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (cars.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="bg-white rounded-2xl shadow-xl p-12 max-w-md mx-auto">
-            <div className="text-6xl mb-4">🔍</div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">No Cars to Compare</h1>
-            <p className="text-gray-500 mb-6">Add some cars to compare from the cars page</p>
-            <Link href="/cars" className="inline-flex items-center gap-2 bg-amber-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-amber-700 transition">
-              Browse Cars <FaArrowLeft className="rotate-180" />
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
+    return <LoadingSkeleton />
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4 mt-20">
-              <Link href="/cars" className="group flex items-center gap-2 text-gray-600 hover:text-amber-600 transition-all">
-                <FaArrowLeft className="group-hover:-translate-x-1 transition-transform" />
-                <span>Back to Cars</span>
-              </Link>
-              <div className="h-8 w-px bg-gray-300"></div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">Compare Vehicles</h1>
-                <p className="text-sm text-gray-500">Side-by-side comparison of {cars.length} vehicles</p>
+    <>
+      <div className="bg-[#FDFBF7] min-h-screen pt-24 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="mb-8 text-center">
+            <h1 className="text-4xl font-bold text-gray-800 mb-3">Find Your Perfect Ride</h1>
+            <p className="text-slate-600 max-w-2xl mx-auto">
+              Browse through our extensive collection of premium vehicles at competitive rates
+            </p>
+          </div>
+
+          {/* Search Bar */}
+          <div className="mb-6">
+            <div className="relative">
+              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-amber-500" />
+              <input
+                type="text"
+                placeholder="Search by car name, location, or type..."
+                className="w-full pl-12 pr-4 py-4 border border-amber-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white shadow-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-white border border-amber-200 rounded-xl hover:bg-amber-50 transition-all"
+            >
+              <FaFilter className="text-amber-500" />
+              <span className="font-medium">Filters</span>
+              {(filters.location || filters.type || filters.availability || priceMin > getGlobalMinPrice() || priceMax < getGlobalMaxPrice()) && (
+                <span className="w-5 h-5 rounded-full bg-amber-600 text-white text-xs flex items-center justify-center">
+                  {[
+                    filters.location ? 1 : 0,
+                    filters.type ? 1 : 0,
+                    filters.availability ? 1 : 0,
+                    priceMin > getGlobalMinPrice() || priceMax < getGlobalMaxPrice() ? 1 : 0
+                  ].filter(Boolean).length}
+                </span>
+              )}
+            </button>
+
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-500">Sort by:</span>
+              <select
+                className="px-4 py-2 border border-amber-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="recommended">Recommended</option>
+                <option value="price_low">Price: Low to High</option>
+                <option value="price_high">Price: High to Low</option>
+                <option value="rating">Highest Rated</option>
+                <option value="available">Availability</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Filters Panel */}
+          {showFilters && (
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-lg">Filter Cars</h3>
+                <button onClick={clearFilters} className="text-sm text-amber-600 hover:text-amber-700">
+                  Clear All
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Location</label>
+                  <div className="relative">
+                    <FaMapMarkerAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-500" />
+                    <input
+                      type="text"
+                      placeholder="City or area"
+                      className="w-full pl-10 pr-3 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      value={filters.location}
+                      onChange={(e) => setFilters({...filters, location: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Price Range</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      placeholder="Min ₦"
+                      className="w-1/2 px-3 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      value={filters.priceMin}
+                      onChange={(e) => setFilters({...filters, priceMin: e.target.value})}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max ₦"
+                      className="w-1/2 px-3 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      value={filters.priceMax}
+                      onChange={(e) => setFilters({...filters, priceMax: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Car Type</label>
+                  <select
+                    className="w-full px-3 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    value={filters.type}
+                    onChange={(e) => setFilters({...filters, type: e.target.value})}
+                  >
+                    {carTypes.map(type => (
+                      <option key={type} value={type === 'All' ? '' : type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Availability</label>
+                  <select
+                    className="w-full px-3 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    value={filters.availability}
+                    onChange={(e) => setFilters({...filters, availability: e.target.value})}
+                  >
+                    {availabilityOptions.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="bg-amber-100 px-3 py-1.5 rounded-full">
-                <span className="text-sm font-semibold text-amber-700">{cars.length} of 3 selected</span>
-              </div>
-              <button
-                onClick={() => {
-                  localStorage.removeItem('compareList')
-                  window.location.href = '/cars'
-                }}
-                className="text-sm text-gray-500 hover:text-red-500 transition-colors"
-              >
-                Clear All
+          )}
+
+          {/* Results Count */}
+          <div className="mb-4">
+            <p className="text-slate-500">
+              Found <span className="font-semibold text-amber-600">{filteredCars.length}</span> cars
+            </p>
+          </div>
+
+          {/* Cars Grid */}
+          {filteredCars.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-2xl shadow-sm">
+              <FaCar className="text-6xl text-amber-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-slate-700 mb-2">No cars found</h3>
+              <p className="text-slate-500 mb-6">Try adjusting your filters or search criteria</p>
+              <button onClick={clearFilters} className="bg-amber-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-amber-700 transition inline-flex items-center gap-2">
+                <FaTimes /> Clear Filters
               </button>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredCars.map((car, index) => (
+                <div key={car.id} style={{ animationDelay: `${index * 0.05}s` }}>
+                  <CarCard car={car} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-
-        {/* Best Value Badge */}
-        {bestValueCar && (
-          <div className="mb-6 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-4 text-white">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-white/20 p-2 rounded-full">
-                  <FaStar className="text-yellow-300" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">Best Value Pick</p>
-                  <p className="text-lg font-bold">{bestValueCar.name}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm opacity-90">Highest rated for its price</p>
-                <p className="text-2xl font-bold">{bestValueCar.rating} ⭐</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Comparison Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {cars.map((car) => {
-            const isBestValue = bestValueCar?.id === car.id
-            return (
-              <div key={car.id} className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 ${isBestValue ? 'ring-2 ring-amber-500' : ''}`}>
-                {/* Best Value Ribbon */}
-                {isBestValue && (
-                  <div className="bg-amber-500 text-white text-center py-1 text-sm font-semibold">
-                    ⭐ Best Value Choice
-                  </div>
-                )}
-                
-                {/* Car Image */}
-                <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
-                  <img
-                    src={getCarImage(car.name)}
-                    alt={car.name}
-                    className="w-full h-full object-contain bg-gray-50 p-4"
-                    onError={(e) => {
-                      e.target.onerror = null
-                      e.target.src = 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600&h=400&fit=crop'
-                    }}
-                  />
-                  {!car.available && (
-                    <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-semibold">
-                      Unavailable
-                    </div>
-                  )}
-                </div>
-
-                {/* Car Info */}
-                <div className="p-5">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-800">{car.name}</h2>
-                      <p className="text-sm text-gray-500">{car.type}</p>
-                    </div>
-                    <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg">
-                      <FaStar className="text-yellow-500 text-sm" />
-                      <span className="font-semibold text-gray-700">{car.rating}</span>
-                    </div>
-                  </div>
-
-                  {/* Price */}
-                  <div className="mb-4 p-3 bg-amber-50 rounded-xl">
-                    <div className="text-center">
-                      <span className="text-2xl font-bold text-amber-600">{formatPrice(car.pricePerDay)}</span>
-                      <span className="text-gray-500"> /day</span>
-                      {car.pricePerDay <= 25000 && (
-                        <div className="mt-1 text-xs text-green-600 font-semibold">Best Budget Option</div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Specs Grid */}
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <FaUsers className="text-amber-500" />
-                      <span className="text-sm">{car.seats} Seats</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <FaGasPump className="text-amber-500" />
-                      <span className="text-sm">{car.fuelType}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <FaCog className="text-amber-500" />
-                      <span className="text-sm">{car.transmission}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <FaMapMarkerAlt className="text-amber-500" />
-                      <span className="text-sm">{car.location}</span>
-                    </div>
-                  </div>
-
-                  {/* Features */}
-                  <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-2">Key Features</h3>
-                    <div className="space-y-1.5">
-                      {car.features?.slice(0, 5).map((feature, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-sm">
-                          <FaCheck className="text-green-500 text-xs" />
-                          <span className="text-gray-600">{feature}</span>
-                        </div>
-                      ))}
-                      {car.features?.length > 5 && (
-                        <div className="text-xs text-gray-400 mt-1">+{car.features.length - 5} more features</div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 mt-4">
-                    <Link href={`/cars/${car.id}`} className="flex-1">
-                      <button className="w-full bg-amber-600 text-white py-2 rounded-xl font-semibold text-sm hover:bg-amber-700 transition">
-                        View Details
-                      </button>
-                    </Link>
-                    <button
-                      onClick={() => {
-                        const compareList = JSON.parse(localStorage.getItem('compareList') || '[]')
-                        const newList = compareList.filter(c => c.id !== car.id)
-                        localStorage.setItem('compareList', JSON.stringify(newList))
-                        window.location.reload()
-                      }}
-                      className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-red-50 hover:text-red-600 transition"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Full Feature Comparison Table */}
-        {cars.length >= 2 && (
-          <div className="mt-12 bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b">
-              <h2 className="text-lg font-bold text-gray-800">Detailed Feature Comparison</h2>
-              <p className="text-sm text-gray-500">Compare all features side by side</p>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Feature</th>
-                    {cars.map((car) => (
-                      <th key={car.id} className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                        {car.name}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {/* Price Row */}
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-700">💰 Price per day</td>
-                    {cars.map((car) => (
-                      <td key={car.id} className="px-6 py-4 text-center font-bold text-amber-600">
-                        {formatPrice(car.pricePerDay)}
-                      </td>
-                    ))}
-                  </tr>
-                  
-                  {/* Rating Row */}
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-700">⭐ Rating</td>
-                    {cars.map((car) => (
-                      <td key={car.id} className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <FaStar className="text-yellow-500" />
-                          <span className="font-semibold">{car.rating}</span>
-                          <span className="text-gray-400 text-sm">/5</span>
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                  
-                  {/* Type Row */}
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-700">🚗 Vehicle Type</td>
-                    {cars.map((car) => (
-                      <td key={car.id} className="px-6 py-4 text-center">{car.type}</td>
-                    ))}
-                  </tr>
-                  
-                  {/* Seats Row */}
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-700">👥 Seating Capacity</td>
-                    {cars.map((car) => (
-                      <td key={car.id} className="px-6 py-4 text-center">{car.seats} seats</td>
-                    ))}
-                  </tr>
-                  
-                  {/* Fuel Row */}
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-700">⛽ Fuel Type</td>
-                    {cars.map((car) => (
-                      <td key={car.id} className="px-6 py-4 text-center">{car.fuelType}</td>
-                    ))}
-                  </tr>
-                  
-                  {/* Transmission Row */}
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-700">⚙️ Transmission</td>
-                    {cars.map((car) => (
-                      <td key={car.id} className="px-6 py-4 text-center">{car.transmission}</td>
-                    ))}
-                  </tr>
-                  
-                  {/* Location Row */}
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-700">📍 Location</td>
-                    {cars.map((car) => (
-                      <td key={car.id} className="px-6 py-4 text-center">{car.location}</td>
-                    ))}
-                  </tr>
-                  
-                  {/* Availability Row */}
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-700">✅ Availability</td>
-                    {cars.map((car) => (
-                      <td key={car.id} className="px-6 py-4 text-center">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${car.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {car.available ? 'Available' : 'Unavailable'}
-                        </span>
-                      </td>
-                    ))}
-                  </tr>
-                  
-                  {/* Features Section */}
-                  <tr className="bg-gray-50">
-                    <td colSpan={cars.length + 1} className="px-6 py-3 font-semibold text-gray-700">
-                      🎯 Features & Amenities
-                    </td>
-                  </tr>
-                  
-                  {allFeatures.map((feature) => (
-                    <tr key={feature} className="hover:bg-gray-50">
-                      <td className="px-6 py-3 pl-10 text-gray-600">{feature}</td>
-                      {cars.map((car) => (
-                        <td key={car.id} className="px-6 py-3 text-center">
-                          {car.features?.includes(feature) ? (
-                            <FaCheck className="text-green-500 mx-auto" />
-                          ) : (
-                            <FaTimes className="text-red-400 mx-auto" />
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Recommendation Section */}
-        {cars.length >= 2 && bestValueCar && (
-          <div className="mt-8 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6">
-            <div className="flex items-start gap-4">
-              <div className="bg-amber-500 p-3 rounded-full">
-                <FaInfoCircle className="text-white text-xl" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-2">Our Recommendation</h3>
-                <p className="text-gray-700 mb-3">
-                  Based on your comparison, we recommend the <span className="font-bold text-amber-600">{bestValueCar.name}</span> as it offers the best value for money with a {bestValueCar.rating}⭐ rating at {formatPrice(bestValueCar.pricePerDay)}/day.
-                </p>
-                <div className="flex gap-3">
-                  <Link href={`/cars/${bestValueCar.id}`}>
-                    <button className="bg-amber-600 text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-amber-700 transition">
-                      View {bestValueCar.name}
-                    </button>
-                  </Link>
-                  <button
-                    onClick={() => {
-                      localStorage.removeItem('compareList')
-                      window.location.href = '/cars'
-                    }}
-                    className="border border-amber-600 text-amber-600 px-6 py-2 rounded-lg font-semibold text-sm hover:bg-amber-50 transition"
-                  >
-                    Compare More Cars
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-    </div>
+      <ComparisonBar />
+    </>
   )
 }

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { FaStar, FaGasPump, FaUsers, FaCog, FaMapMarkerAlt, FaCar, FaCheckCircle, FaTimesCircle } from 'react-icons/fa'
 import { getCarImage } from '../../lib/carImages'
 import { useCompare } from '../../context/CompareContext'
+import Tooltip from '../ui/Tooltip'
 
 export default function CarCard({ car }) {
   const [imageError, setImageError] = useState(false)

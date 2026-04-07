@@ -36,6 +36,9 @@ export default function Tooltip({ children, content, position = 'top' }) {
           top = triggerRect.top + (triggerRect.height / 2) - (tooltipRect.height / 2)
           left = triggerRect.right + 8
           break
+        default:
+          top = triggerRect.top - tooltipRect.height - 8
+          left = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2)
       }
       
       setCoords({ top, left })
@@ -58,7 +61,7 @@ export default function Tooltip({ children, content, position = 'top' }) {
       {isVisible && (
         <div
           ref={tooltipRef}
-          className="fixed z-50 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded shadow-lg whitespace-nowrap animate-fadeIn"
+          className="fixed z-50 px-3 py-2 text-xs font-medium text-white bg-gray-900 rounded-lg shadow-lg whitespace-nowrap animate-fadeIn"
           style={{ top: coords.top, left: coords.left }}
         >
           {content}

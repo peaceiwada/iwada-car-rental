@@ -26,9 +26,7 @@ const ComparisonBar = () => {
               </button>
             </div>
           ))}
-          {compareList.length < 3 && (
-            <div className="text-xs text-gray-400">Add {3 - compareList.length} more</div>
-          )}
+          {compareList.length < 3 && <div className="text-xs text-gray-400">Add {3 - compareList.length} more</div>}
         </div>
         <div className="flex gap-2">
           <button onClick={clearCompare} className="text-sm text-gray-500 hover:text-red-500 px-3 py-1">
@@ -289,8 +287,7 @@ export default function CarsPage() {
                 </button>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Location Filter */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Location</label>
                   <div className="relative">
@@ -305,60 +302,26 @@ export default function CarsPage() {
                   </div>
                 </div>
 
-                {/* Price Range Slider */}
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium mb-2">Price Range (per day)</label>
-                  
-                  {/* Selected values display */}
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="bg-amber-50 px-3 py-1.5 rounded-lg">
-                      <span className="text-xs text-gray-500">Min</span>
-                      <p className="text-amber-600 font-bold">{formatPrice(priceMin)}</p>
-                    </div>
-                    <span className="text-gray-400">→</span>
-                    <div className="bg-amber-50 px-3 py-1.5 rounded-lg">
-                      <span className="text-xs text-gray-500">Max</span>
-                      <p className="text-amber-600 font-bold">{formatPrice(priceMax)}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Min Slider */}
-                  <div className="mb-2">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Price Range</label>
+                  <div className="flex gap-2">
                     <input
-                      type="range"
-                      min={getGlobalMinPrice()}
-                      max={getGlobalMaxPrice()}
-                      step={1000}
-                      value={priceMin}
-                      onChange={handlePriceMinChange}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                      type="number"
+                      placeholder="Min ₦"
+                      className="w-1/2 px-3 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      value={filters.priceMin}
+                      onChange={(e) => setFilters({...filters, priceMin: e.target.value})}
                     />
-                  </div>
-                  
-                  {/* Max Slider */}
-                  <div>
                     <input
-                      type="range"
-                      min={getGlobalMinPrice()}
-                      max={getGlobalMaxPrice()}
-                      step={1000}
-                      value={priceMax}
-                      onChange={handlePriceMaxChange}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                      type="number"
+                      placeholder="Max ₦"
+                      className="w-1/2 px-3 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      value={filters.priceMax}
+                      onChange={(e) => setFilters({...filters, priceMax: e.target.value})}
                     />
-                  </div>
-                  
-                  {/* Range indicator */}
-                  <div className="mt-3 flex justify-between text-xs text-gray-400">
-                    <span>{formatPrice(getGlobalMinPrice())}</span>
-                    <span className="text-amber-600 font-medium">
-                      {Math.round(((priceMax - priceMin) / (getGlobalMaxPrice() - getGlobalMinPrice())) * 100)}% of range
-                    </span>
-                    <span>{formatPrice(getGlobalMaxPrice())}</span>
                   </div>
                 </div>
 
-                {/* Car Type Filter */}
                 <div>
                   <label className="block text-sm font-medium mb-2">Car Type</label>
                   <select
@@ -372,7 +335,6 @@ export default function CarsPage() {
                   </select>
                 </div>
 
-                {/* Availability Filter */}
                 <div>
                   <label className="block text-sm font-medium mb-2">Availability</label>
                   <select
@@ -393,11 +355,6 @@ export default function CarsPage() {
           <div className="mb-4">
             <p className="text-slate-500">
               Found <span className="font-semibold text-amber-600">{filteredCars.length}</span> cars
-              {priceMin > getGlobalMinPrice() || priceMax < getGlobalMaxPrice() ? (
-                <span className="text-xs text-gray-400 ml-2">
-                  (Price range: {formatPrice(priceMin)} - {formatPrice(priceMax)})
-                </span>
-              ) : null}
             </p>
           </div>
 
