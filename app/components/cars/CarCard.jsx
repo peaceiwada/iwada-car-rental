@@ -2,15 +2,30 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { FaStar, FaGasPump, FaUsers, FaCog, FaMapMarkerAlt, FaCar, FaCheckCircle, FaTimesCircle } from 'react-icons/fa'
+import { FaStar, FaGasPump, FaUsers, FaCog, FaMapMarkerAlt, FaCar, FaCheckCircle, FaTimesCircle, FaHeart, FaRegHeart } from 'react-icons/fa'
 import { getCarImage } from '../../lib/carImages'
 import { useCompare } from '../../context/CompareContext'
+import { useFavorites } from '../../context/FavoritesContext'
 import Tooltip from '../ui/Tooltip'
 
 export default function CarCard({ car }) {
   const [imageError, setImageError] = useState(false)
   const { addToCompare, isInCompare, removeFromCompare } = useCompare()
-  const imageUrl = getCarImage(car.name)
+  const { isInFavorites, toggleFavorite } = useFavorites()
+  
+  // Get the correct image source - checks multiple possible locations
+  const getImageSrc = () => {
+    // If car has direct imageUrl (mock data)
+    if (car.imageUrl) return car.imageUrl
+    // If car has images array from agent upload (base64)
+    if (car.images && car.images.length > 0) return car.images[0]
+    // If car has single image property
+    if (car.image) return car.image
+    // Fallback to default car image based on name
+    return getCarImage(car.name)
+  }
+  
+  const imageSrc = getImageSrc()
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-NG', {
@@ -24,13 +39,13 @@ export default function CarCard({ car }) {
   if (!car) return null
 
   return (
-    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer transform hover:-translate-y-1 h-full flex flex-col">
+    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer transform hover:-translate-y-1 h-full flex flex-col relative">
       {/* Car Image */}
       <Link href={`/cars/${car.id}`}>
         <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-          {!imageError && imageUrl ? (
+          {!imageError && imageSrc ? (
             <img
-              src={imageUrl}
+              src={imageSrc}
               alt={car.name}
               className="w-full h-full object-contain bg-gray-50 p-2 group-hover:scale-105 transition-transform duration-500"
               onError={() => setImageError(true)}
@@ -60,9 +75,26 @@ export default function CarCard({ car }) {
             )}
           </div>
           
+          {/* FAVORITE BUTTON */}
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              toggleFavorite(car)
+            }}
+            className="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md hover:scale-110 transition-transform duration-200"
+            aria-label={isInFavorites(car.id) ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            {isInFavorites(car.id) ? (
+              <FaHeart className="text-red-500 text-lg animate-pulse" />
+            ) : (
+              <FaRegHeart className="text-gray-600 text-lg hover:text-red-500 transition-colors" />
+            )}
+          </button>
+          
           {/* Featured Badge */}
           {car.featured && (
-            <div className="absolute top-3 right-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 py-1 rounded-lg text-xs font-semibold shadow-lg z-10">
+            <div className="absolute bottom-3 left-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 py-1 rounded-lg text-xs font-semibold shadow-lg z-10">
               Featured
             </div>
           )}
@@ -117,7 +149,7 @@ export default function CarCard({ car }) {
           </div>
         </Link>
 
-        {/* Action Buttons - Outside the Link */}
+        {/* Action Buttons */}
         <div className="flex gap-2 mt-2">
           <button 
             onClick={(e) => {

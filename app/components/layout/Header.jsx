@@ -33,8 +33,8 @@ export default function Header() {
   }, [isMenuOpen])
 
   const getDashboardLink = () => {
-    if (isAdmin()) return '/admin'
-    if (isAgent()) return '/agent/dashboard'
+    if (isAdmin) return '/admin/dashboard'      // ← CHANGED: /admin/dashboard → /admin/dashboard
+    if (isAgent) return '/agent/dashboard'
     if (isAuthenticated) return '/user/dashboard'
     return '/login'
   }
@@ -96,13 +96,13 @@ export default function Header() {
               
               {isAuthenticated ? (
                 <div className="flex items-center space-x-4">
-                  {isAdmin() && (
+                  {isAdmin && (
                     <div className="flex items-center gap-1 bg-teal-50 text-teal-700 px-3 py-1.5 rounded-full text-xs font-semibold">
                       <FaShieldAlt size={12} />
                       <span>Admin</span>
                     </div>
                   )}
-                  {isAgent() && (
+                  {isAgent && (
                     <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full text-xs font-semibold">
                       <FaCar size={12} />
                       <span>Agent</span>
@@ -182,11 +182,11 @@ export default function Header() {
                 <div>
                   <p className="font-semibold text-slate-800">{user?.name}</p>
                   <p className="text-xs text-slate-500">{user?.email}</p>
-                  {(isAdmin() || isAgent()) && (
+                  {(isAdmin || isAgent) && (
                     <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${
-                      isAdmin() ? 'bg-teal-100 text-teal-700' : 'bg-amber-100 text-amber-700'
+                      isAdmin ? 'bg-teal-100 text-teal-700' : 'bg-amber-100 text-amber-700'
                     }`}>
-                      {isAdmin() ? 'Admin' : 'Agent'}
+                      {isAdmin ? 'Admin' : 'Agent'}
                     </span>
                   )}
                 </div>

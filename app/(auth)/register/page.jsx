@@ -8,7 +8,14 @@ import {
   FaStore, FaMapMarkerAlt, FaArrowRight, FaShieldAlt, FaCheckCircle,
   FaUserPlus, FaIdCard
 } from 'react-icons/fa'
-import { useAuth, UserRole } from '../../components/auth/AuthProvider'
+import { useAuth } from '../../components/auth/AuthProvider'
+
+// Define UserRole locally if not exported from AuthProvider
+const UserRole = {
+  BOOKER: 'booker',
+  AGENT: 'agent',
+  ADMIN: 'admin'
+}
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -43,11 +50,9 @@ export default function RegisterPage() {
       newErrors.email = 'Email is invalid'
     }
     
-    // FIXED: Only check if phone is not empty - no strict validation
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required'
     }
-    // Removed the strict regex validation for phone number
     
     if (!formData.password) {
       newErrors.password = 'Password is required'
@@ -77,6 +82,7 @@ export default function RegisterPage() {
     return Object.keys(newErrors).length === 0
   }
 
+  // THIS IS THE UPDATED handleSubmit FUNCTION - REPLACE YOUR OLD ONE WITH THIS
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -92,8 +98,13 @@ export default function RegisterPage() {
     const result = await register(userData)
     
     if (result.success) {
-      if (selectedRole === UserRole.AGENT) {
-        router.push('/agent/dashboard')
+      // Use the redirectTo from the result
+      if (result.redirectTo) {
+        router.push(result.redirectTo)
+      } else if (result.requiresApproval) {
+        router.push('/agent/pending')
+      } else if (selectedRole === UserRole.AGENT) {
+        router.push('/agent/pending')
       } else if (selectedRole === UserRole.BOOKER) {
         router.push('/user/dashboard')
       } else {
@@ -205,7 +216,7 @@ export default function RegisterPage() {
                   value={formData.name}
                   onChange={handleChange}
                   className={`block w-full pl-10 pr-3 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all ${
-                    errors.name ? 'border-red-400' : 'border-amber-100'
+                    errors.name ? 'border-red-400' : 'border-gray-200'
                   }`}
                   placeholder="John Doe"
                 />
@@ -229,7 +240,7 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   className={`block w-full pl-10 pr-3 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all ${
-                    errors.email ? 'border-red-400' : 'border-amber-100'
+                    errors.email ? 'border-red-400' : 'border-gray-200'
                   }`}
                   placeholder="you@example.com"
                 />
@@ -237,7 +248,7 @@ export default function RegisterPage() {
               {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
             </div>
 
-            {/* Phone Number - FIXED: No strict validation */}
+            {/* Phone Number */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Phone Number *
@@ -248,18 +259,17 @@ export default function RegisterPage() {
                 </div>
                 <input
                   name="phone"
-                  type="text"
+                  type="tel"
                   required
                   value={formData.phone}
                   onChange={handleChange}
                   className={`block w-full pl-10 pr-3 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all ${
-                    errors.phone ? 'border-red-400' : 'border-amber-100'
+                    errors.phone ? 'border-red-400' : 'border-gray-200'
                   }`}
                   placeholder="+234 123 456 7890"
                 />
               </div>
               {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
-              <p className="mt-1 text-xs text-gray-400">Enter your phone number (any format accepted)</p>
             </div>
 
             {/* Agent-specific fields */}
@@ -283,7 +293,7 @@ export default function RegisterPage() {
                       value={formData.businessName}
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-3 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all ${
-                        errors.businessName ? 'border-red-400' : 'border-amber-200'
+                        errors.businessName ? 'border-red-400' : 'border-gray-200'
                       }`}
                       placeholder="Your Car Rental Business"
                     />
@@ -305,7 +315,7 @@ export default function RegisterPage() {
                       value={formData.businessAddress}
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-3 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all ${
-                        errors.businessAddress ? 'border-red-400' : 'border-amber-200'
+                        errors.businessAddress ? 'border-red-400' : 'border-gray-200'
                       }`}
                       placeholder="Lagos, Nigeria"
                     />
@@ -316,7 +326,7 @@ export default function RegisterPage() {
                 <div className="bg-amber-100/50 p-3 rounded-lg">
                   <p className="text-xs text-amber-700 flex items-start gap-2">
                     <FaShieldAlt className="text-amber-600 mt-0.5 flex-shrink-0" />
-                    <span>Agent accounts require admin verification.</span>
+                    <span>Agent accounts require admin verification. You'll be notified once approved.</span>
                   </p>
                 </div>
               </div>
@@ -338,7 +348,7 @@ export default function RegisterPage() {
                   value={formData.password}
                   onChange={handleChange}
                   className={`block w-full pl-10 pr-10 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all ${
-                    errors.password ? 'border-red-400' : 'border-amber-100'
+                    errors.password ? 'border-red-400' : 'border-gray-200'
                   }`}
                   placeholder="••••••"
                 />
@@ -374,7 +384,7 @@ export default function RegisterPage() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   className={`block w-full pl-10 pr-10 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all ${
-                    errors.confirmPassword ? 'border-red-400' : 'border-amber-100'
+                    errors.confirmPassword ? 'border-red-400' : 'border-gray-200'
                   }`}
                   placeholder="••••••"
                 />
@@ -400,7 +410,7 @@ export default function RegisterPage() {
                 type="checkbox"
                 checked={agreeTerms}
                 onChange={(e) => setAgreeTerms(e.target.checked)}
-                className="mt-1 w-4 h-4 text-amber-500 border-2 border-amber-200 rounded focus:ring-amber-500 cursor-pointer"
+                className="mt-1 w-4 h-4 text-amber-500 border-2 border-gray-300 rounded focus:ring-amber-500 cursor-pointer"
               />
               <label htmlFor="terms" className="text-sm text-gray-600">
                 I agree to the{' '}

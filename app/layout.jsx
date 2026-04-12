@@ -3,8 +3,9 @@ import { Inter } from 'next/font/google'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
 import { Toaster } from 'react-hot-toast'
-import AuthProvider from './components/auth/AuthProvider'
+import AuthProvider from './components/auth/AuthProvider'  // ← Only ONCE
 import { CompareProvider } from './context/CompareContext'
+import { FavoritesProvider } from './context/FavoritesContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -20,23 +21,25 @@ export default function RootLayout({ children }) {
       <body className={inter.className}>
         <AuthProvider>
           <CompareProvider>
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <main className="grow">
-                {children}
-              </main>
-              <Footer />
-            </div>
-            <Toaster 
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-              }}
-            />
+            <FavoritesProvider>
+              <div className="min-h-screen flex flex-col">
+                <Header />
+                <main className="grow">
+                  {children}
+                </main>
+                <Footer />
+              </div>
+              <Toaster 
+                position="top-right"
+                toastOptions={{
+                  duration: 4000,
+                  style: {
+                    background: '#363636',
+                    color: '#fff',
+                  },
+                }}
+              />
+            </FavoritesProvider>
           </CompareProvider>
         </AuthProvider>
       </body>

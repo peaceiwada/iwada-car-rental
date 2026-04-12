@@ -18,7 +18,6 @@ export const CompareProvider = ({ children }) => {
 
   useEffect(() => {
     setIsClient(true)
-    // Load from localStorage on mount
     const saved = localStorage.getItem('compareList')
     if (saved) {
       try {
@@ -29,7 +28,6 @@ export const CompareProvider = ({ children }) => {
     }
   }, [])
 
-  // Save to localStorage whenever compareList changes
   useEffect(() => {
     if (isClient) {
       localStorage.setItem('compareList', JSON.stringify(compareList))
@@ -61,17 +59,15 @@ export const CompareProvider = ({ children }) => {
     return compareList.some(car => car.id === carId)
   }
 
-  const value = {
-    compareList,
-    addToCompare,
-    removeFromCompare,
-    clearCompare,
-    isInCompare,
-    compareCount: compareList.length
-  }
-
   return (
-    <CompareContext.Provider value={value}>
+    <CompareContext.Provider value={{
+      compareList,
+      addToCompare,
+      removeFromCompare,
+      clearCompare,
+      isInCompare,
+      compareCount: compareList.length
+    }}>
       {children}
     </CompareContext.Provider>
   )

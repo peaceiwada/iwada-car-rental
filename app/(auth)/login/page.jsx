@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { FaEnvelope, FaLock, FaCar, FaEye, FaEyeSlash, FaArrowRight, FaShieldAlt, FaUserCheck } from 'react-icons/fa'
+import { FaEnvelope, FaLock, FaCar, FaEye, FaEyeSlash, FaArrowRight } from 'react-icons/fa'
 import { useAuth } from '../../components/auth/AuthProvider'
 
 export default function LoginPage() {
@@ -23,14 +23,17 @@ export default function LoginPage() {
     const result = await login(formData.email, formData.password)
     
     if (result.success) {
-      if (result.role === 'admin') {
-        router.push('/admin')
+      // Use redirectTo from login response if available
+      if (result.redirectTo) {
+        router.push(result.redirectTo)
+      } else if (result.role === 'admin') {
+        router.push('/admin/dashboard')
       } else if (result.role === 'agent') {
         router.push('/agent/dashboard')
       } else if (result.role === 'booker') {
         router.push('/user/dashboard')
       } else {
-        router.push('/dashboard')
+        router.push('/')
       }
     }
     
@@ -165,7 +168,6 @@ export default function LoginPage() {
           </form>
         </div>
 
-      
         {/* Trust Badges */}
         <div className="mt-6 flex justify-center gap-4">
           <div className="flex items-center gap-1 text-xs text-gray-500">
